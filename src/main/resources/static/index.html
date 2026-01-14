@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Conflict Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Conflict Tracker</h1>
+<p>Listado de conflictos bélicos registrados.</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Fecha de inicio</th>
+        <th>Estado</th>
+    </tr>
+    </thead>
+    <tbody id="conflicts-body">
+    </tbody>
+</table>
+
+<script>
+    fetch("/api/v1/conflicts")
+        .then(response => response.json())
+        .then(conflicts => {
+            const tbody = document.getElementById("conflicts-body");
+            tbody.innerHTML = "";
+
+            conflicts.forEach(conflict => {
+                const row = document.createElement("tr");
+
+                row.innerHTML = `
+                    <td>${conflict.id ?? ""}</td>
+                    <td>${conflict.name ?? ""}</td>
+                    <td>${conflict.startDate ?? ""}</td>
+                    <td>${conflict.status ?? ""}</td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error("Error al cargar los conflictos:", error);
+        });
+</script>
+
+</body>
+</html>

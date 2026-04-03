@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Conflict Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f0f0f0;
+        }
+
+        .loading {
+            margin-top: 20px;
+            font-style: italic;
+        }
+
+        .error {
+            margin-top: 20px;
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Conflict Tracker</h1>
+<p>Listado de conflictos bélicos registrados.</p>
+
+<div id="message" class="loading">Cargando conflictos...</div>
+
+<table id="conflicts-table" style="display:none;">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Fecha de inicio</th>
+        <th>Estado</th>
+    </tr>
+    </thead>
+    <tbody id="conflicts-body"></tbody>
+</table>
+
+<script>
+    const API_URL = "/api/v1/conflicts";
+    const message = document.getElementById("message");
+    const table = document.getElementById("conflicts-table");
+    const tbody = document.getElementById("conflicts-body");
+
+    const formatDate = (date) => {
+        if (!date) return "";
+        return date.includes("T") ? date.split("T")[0] : date;
+    };
+
+    fetch(API_URL)
+        .then(async response => {
+            if (!response.ok) {
+                throw new Error("Error HTTP " + response.status);
+            }
+            return response.json();
+        })
+        .then(conflicts => {
+            message.style.display = "none";
+
+            if (!conflicts || conflicts.length === 0) {
+                message.textContent = "No hay conflictos registrados.";
+                message.style.display = "block";
+                return;
+            }
+
+            table.style.display = "table";
+            tbody.innerHTML = "";
+
+            conflicts.forEach(conflict => {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${conflict.id ?? ""}</td>
+                    <td>${conflict.name ?? ""}</td>
+                    <td>${formatDate(conflict.startDate)}</td>
+                    <td>${conflict.status ?? ""}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        })
+        .catch(error => {
+            console.error(error);
+            message.textContent = "Error al cargar los conflictos. Revisa la consola.";
+            message.className = "error";
+        });
+</script>
+
+</body>
+</html>

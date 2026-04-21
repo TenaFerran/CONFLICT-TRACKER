@@ -1,88 +1,276 @@
-# Conflict Tracker
+# Conflict Tracker – Desplegament Fullstack
 
-## Descripción del proyecto
+Aplicación desarrollada para la asignatura de Fullstack, orientada a la gestión de conflictos, utilizando Vue 3 en el frontend y Spring Boot en el backend.
 
-Conflict Tracker es una aplicación desarrollada con Spring Boot para la asignatura de FULLSTACK.
-La aplicación es una aplicación para gestionar conflictos y mostrarlos.
+El proyecto se ha desplegado en una arquitectura distribuida en la nube, utilizando Vercel para el frontend, Railway para el backend y Supabase como base de datos.
 
-## Instrucciones para compilar y ejecutar la aplicación
+## URLs de la aplicación
 
-Para poder ejecutar la aplicación es necesario tener instalado Java 21 o superior, Maven 3.9 o superior y PostgreSQL 16 o superior, además de disponer del puerto 8080 libre.
+Frontend (Vercel):  
+https://vue-conflict-tracker.vercel.app
 
-En primer lugar, se debe crear la base de datos en PostgreSQL ejecutando el siguiente comando SQL:
-
-CREATE DATABASE conflict_tracker;
-
-A continuación, se debe configurar la conexión a la base de datos editando el archivo src/main/resources/application.yml con las credenciales correspondientes.
-
-Es importante asegurarse de que el servidor de PostgreSQL esté en ejecución antes de iniciar la aplicación si no no funcionara.
-
-Una vez configurado todo, desde la raíz del proyecto donde se encuentra el archivo pom.xml se debe ejecutar el comando:
-
-mvn clean package
-
-Esto generará el archivo .jar dentro de la carpeta target/.
-
-Posteriormente, la aplicación puede ejecutarse con:
-
-mvn spring-boot:run (tambien se puede dentro del ide dandole al play)
-
-O bien ejecutando directamente el JAR generado mediante:
-
-java -jar target/conflict-tracker-0.0.1-SNAPSHOT.jar
-
-Una vez iniciada correctamente, la aplicación estará disponible en:
-
-http://localhost:8080
+Backend (Railway):  
+https://conflict-tracker-production-3d6d.up.railway.app
 
 
-## Ejemplos de uso de los endpoints (con curl)
+## Arquitectura de la aplicación
 
-Los endpoints principales de la aplicación permiten realizar operaciones CRUD completas sobre conflictos, así como operaciones similares sobre Faction y Event.
+La aplicación sigue una arquitectura de tres capas desacopladas:
 
-Para obtener la lista de todos los conflictos:
+```
+Frontend (Vue 3 - Vercel)
+        │
+        │ HTTP REST API
+        ↓
+Backend (Spring Boot - Railway)
+        │
+        │ JDBC
+        ↓
+Base de Datos (PostgreSQL - Supabase)
+```
 
-curl -X GET http://localhost:8080/conflicts
 
-Para obtener los detalles de un conflicto específico por su identificador:
+## Tecnologías utilizadas
 
-curl -X GET http://localhost:8080/conflicts/1
+Frontend: Vue 3 + Vite + Pinia  
+Backend: Spring Boot  
+Base de datos: PostgreSQL  
 
-Para crear un nuevo conflicto:
+Hosting:
+- Frontend: Vercel  
+- Backend: Railway  
+- Base de datos: Supabase  
 
-curl -X POST http://localhost:8080/conflicts \
--H "Content-Type: application/json" \
--d '{"name":"Conflicto de prueba","startDate":"2025-01-01","status":"ACTIVE","description":"Descripción del conflicto"}'
 
-Para actualizar un conflicto existente:
+## Variables de entorno
 
-curl -X PUT http://localhost:8080/conflicts/1 \
--H "Content-Type: application/json" \
--d '{"name":"Conflicto actualizado","startDate":"2025-01-01","status":"FROZEN","description":"Descripción modificada"}'
+### Frontend (Vercel)
 
-Para eliminar un conflicto:
+Variable utilizada:
 
-curl -X DELETE http://localhost:8080/conflicts/1
+```
+VITE_API_URL=https://conflict-tracker-production-3d6d.up.railway.app
+```
 
-Para filtrar conflictos por estado:
+Uso en el código (store de conflictos):
 
-curl -X GET "http://localhost:8080/conflicts?status=ACTIVE"
+```js
+const BASE_URL = `${import.meta.env.VITE_API_URL}/api/v1/conflicts`
+```
 
-Para obtener todos los conflictos en los que participa un país identificado por su código:
+Importante:
+- Las variables deben comenzar por `VITE_`
+- Es necesario hacer redeploy tras cualquier modificación
 
-curl -X GET http://localhost:8080/countries/ESP/conflicts
 
-La aplicación también implementa operaciones CRUD similares para las entidades Faction y Event, siguiendo la misma estructura de endpoints:
+### Backend (Railway)
 
-GET /factions  
-GET /factions/{id}  
-POST /factions  
-PUT /factions/{id}  
-DELETE /factions/{id}
+Variables utilizadas para la conexión a la base de datos:
 
-GET /events  
-GET /events/{id}  
-POST /events  
-PUT /events/{id}  
-DELETE /events/{id}
+- DB_URL  
+- DB_USERNAME  
+- DB_PASSWORD  
 
+Ejemplo de configuración en `application.yml`:
+
+```yml
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+```
+
+
+## Configuración de variables de entorno
+
+### En Vercel
+
+1. Acceder a Settings → Environment Variables  
+2. Añadir la variable:  
+   - VITE_API_URL = https://conflict-tracker-production-3d6d.up.railway.app  
+3. Realizar un redeploy del proyecto  
+
+
+### En Railway
+
+1. Acceder a la sección Variables  
+2. Añadir:
+   - DB_URL  
+   - DB_USERNAME  
+   - DB_PASSWORD  
+3. El despliegue se actualiza automáticamente  
+
+
+## Problemas encontrados y soluciones
+
+### 1. Error de conexión con PostgreSQL
+
+Error:
+```
+Driver org.postgresql.Driver claims to not accept jdbcUrl
+```
+
+Causa:  
+Se estaba utilizando un formato incorrecto de conexión:
+
+```
+postgresql://...
+```
+
+Solución:  
+Utilizar el formato JDBC correcto:
+
+```
+jdbc:postgresql://...
+```
+
+
+### 2. Error de conexión con Supabase
+
+Error:
+```
+UnknownHostException
+```
+
+Causa:  
+Uso de un endpoint incorrecto
+
+Solución:  
+Utilizar el endpoint de tipo pooler proporcionado por Supabase
+
+
+### 3. Error de versión de Java en Railway
+
+Error:
+```
+release version 25 not supported
+```
+
+Causa:  
+Railway no soporta Java 25
+
+Solución:  
+- Usar Java 21  
+- Eliminar el perfil `-Pproduction`  
+- Configurar el build command como:
+
+```
+./mvnw clean package -DskipTests
+```
+
+
+### 4. Error de rutas en Vercel (SPA Routing)
+
+Error:
+```
+404 al refrescar rutas
+```
+
+Causa:  
+Uso de Vue Router en modo history
+
+Solución:  
+Crear el archivo `vercel.json`:
+
+```json
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
+```
+
+
+### 5. Error "Unexpected token '<'"
+
+Error:
+```
+is not valid JSON
+```
+
+Causa:  
+El frontend recibía HTML en lugar de JSON
+
+Motivo:
+- URL de la API incorrecta  
+- Variable mal definida (`API_URL` en lugar de `VITE_API_URL`)
+
+Solución:
+
+```js
+import.meta.env.VITE_API_URL
+```
+
+
+### 6. Error CORS
+
+Error:
+```
+No 'Access-Control-Allow-Origin'
+```
+
+Causa:  
+El dominio del frontend no estaba permitido en el backend
+
+Solución:
+
+```java
+@CrossOrigin(origins = "https://vue-conflict-tracker.vercel.app")
+```
+
+
+### 7. Error 404 en la API
+
+Error:
+```
+/conflicts → 404
+```
+
+Causa:  
+Ruta incorrecta en el frontend
+
+Solución:  
+El backend utiliza:
+
+```
+/api/v1/conflicts
+```
+
+Se actualizó el frontend para usar esa ruta correctamente.
+
+
+### 8. Error 500 al crear un conflicto
+
+Causa:  
+Se introducía una fecha no válida (no se permitía la fecha actual)
+
+Solución:  
+Utilizar una fecha válida posterior
+
+Mejora detectada:  
+Sería recomendable devolver un error 400 (Bad Request) en lugar de 500.
+
+
+## Limpieza de datos y control de errores
+
+Para evitar que errores de la API afecten al estado de la aplicación:
+
+- Se comprueba `response.ok` antes de procesar la respuesta  
+- No se guardan datos en Pinia si la respuesta es incorrecta  
+- Se gestionan los errores mediante mensajes controlados  
+
+Ejemplo:
+
+```js
+if (!response.ok) {
+  throw new Error("Error en la API")
+}
+```
+
+
+## Conclusión
+
+Se ha conseguido desplegar correctamente una aplicación fullstack en la nube, separando frontend, backend y base de datos en servicios independientes.
+
+En el proceso han ido habiendo errores ya que era la primera vez que desplegaba los servicios y no estaba familiarizado con el proceso y las webs, pero poco a poco se han corregido los errores y ahora funciona correctamente

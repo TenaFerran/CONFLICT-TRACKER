@@ -10,7 +10,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/conflicts")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "https://conflict-tracker-frontend-vue-ivan.vercel.app/")
 public class ConflictController {
 
     private final ConflictService conflictService;
